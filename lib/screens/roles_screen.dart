@@ -79,8 +79,8 @@ class _RolesScreenState extends State<RolesScreen> {
                 isEditing ? 'Edit Role' : 'Create Role',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
-              content: SizedBox(
-                width: double.maxFinite,
+              content: Container(
+                width: 600,
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

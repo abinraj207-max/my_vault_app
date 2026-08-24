@@ -188,51 +188,54 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // App Logo
-                const Icon(
-                  Icons.shield_outlined,
-                  size: 80,
-                  color: AppColors.highlight,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'MyVault',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: AppColors.textPrimary,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 450),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // App Logo
+                  const Icon(
+                    Icons.shield_outlined,
+                    size: 80,
+                    color: AppColors.highlight,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Zero-Knowledge Online Password & Document Vault',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 12),
+                  const Text(
+                    'MyVault',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Zero-Knowledge Online Password & Document Vault',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
 
-                if (!_isConfigured) ...[
-                  _buildConfigForm(),
-                ] else if (widget.vaultState.supabaseService.isLoggedIn) ...[
-                  _buildUnlockForm(),
-                ] else ...[
-                  _buildAuthTabs(),
-                ],
+                  if (!_isConfigured) ...[
+                    _buildConfigForm(),
+                  ] else if (widget.vaultState.supabaseService.isLoggedIn) ...[
+                    _buildUnlockForm(),
+                  ] else ...[
+                    _buildAuthTabs(),
+                  ],
 
-                if (_errorMessage.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildErrorCard(),
+                  if (_errorMessage.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildErrorCard(),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

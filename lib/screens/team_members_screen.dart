@@ -89,8 +89,8 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                 'Add Team Member',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
-              content: SizedBox(
-                width: double.maxFinite,
+              content: Container(
+                width: 500,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

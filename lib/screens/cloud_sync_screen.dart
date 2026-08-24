@@ -669,30 +669,46 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> with SingleTickerProv
               ],
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isLoading || isSyncing ? null : _signOut,
-                    icon: const Icon(Icons.logout_rounded, size: 16),
-                    label: const Text('Sign Out'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.redAccent,
-                      side: const BorderSide(color: Colors.redAccent, width: 1.5),
-                    ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = MediaQuery.of(context).size.width >= 850;
+                final signOutBtn = OutlinedButton.icon(
+                  onPressed: _isLoading || isSyncing ? null : _signOut,
+                  icon: const Icon(Icons.logout_rounded, size: 16),
+                  label: const Text('Sign Out'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    side: const BorderSide(color: Colors.redAccent, width: 1.5),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _isLoading || isSyncing ? null : _manualSync,
-                    icon: isSyncing
-                        ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : const Icon(Icons.sync_rounded, size: 16),
-                    label: Text(isSyncing ? 'Syncing...' : 'Sync Now'),
-                  ),
-                ),
-              ],
+                );
+
+                final syncBtn = ElevatedButton.icon(
+                  onPressed: _isLoading || isSyncing ? null : _manualSync,
+                  icon: isSyncing
+                      ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Icon(Icons.sync_rounded, size: 16),
+                  label: Text(isSyncing ? 'Syncing...' : 'Sync Now'),
+                );
+
+                if (isDesktop) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 160, child: signOutBtn),
+                      const SizedBox(width: 16),
+                      SizedBox(width: 160, child: syncBtn),
+                    ],
+                  );
+                } else {
+                  return Row(
+                    children: [
+                      Expanded(child: signOutBtn),
+                      const SizedBox(width: 16),
+                      Expanded(child: syncBtn),
+                    ],
+                  );
+                }
+              },
             ),
             const SizedBox(height: 12),
             TextButton(

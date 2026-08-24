@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class SupabaseService {
   static const String _urlKey = 'supabase_url';
   static const String _anonKey = 'supabase_anon_key';
-  
+
   // Default fallback placeholders (for standard developer configuration)
   static const String defaultUrl = 'https://your-project.supabase.co';
   static const String defaultAnonKey = 'your-anon-key';
@@ -16,7 +16,9 @@ class SupabaseService {
 
   SupabaseClient get client {
     if (!_initialized) {
-      throw StateError('Supabase is not initialized. Please configure connection details.');
+      throw StateError(
+        'Supabase is not initialized. Please configure connection details.',
+      );
     }
     return Supabase.instance.client;
   }
@@ -24,7 +26,7 @@ class SupabaseService {
   /// Attempts to initialize Supabase using env variables, saved credentials, or defaults.
   Future<bool> initialize({String? customUrl, String? customAnonKey}) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Save new config if provided
     if (customUrl != null && customAnonKey != null) {
       await prefs.setString(_urlKey, customUrl);
@@ -34,20 +36,26 @@ class SupabaseService {
     // 1. Try to read from flutter_dotenv
     String url = '';
     String key = '';
-    
+
     try {
       url = dotenv.env['SUPABASE_URL'] ?? '';
       key = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
     } catch (_) {}
 
     // Check if the loaded env variables are valid and not the defaults
-    if (url.isEmpty || key.isEmpty || url == defaultUrl || key == defaultAnonKey) {
+    if (url.isEmpty ||
+        key.isEmpty ||
+        url == defaultUrl ||
+        key == defaultAnonKey) {
       // 2. Fallback to SharedPreferences
       url = prefs.getString(_urlKey) ?? '';
       key = prefs.getString(_anonKey) ?? '';
     }
 
-    if (url.isEmpty || key.isEmpty || url == defaultUrl || key == defaultAnonKey) {
+    if (url.isEmpty ||
+        key.isEmpty ||
+        url == defaultUrl ||
+        key == defaultAnonKey) {
       return false;
     }
 
@@ -55,13 +63,16 @@ class SupabaseService {
       await Supabase.initialize(
         url: url,
         anonKey: key,
-        authOptions: const FlutterAuthClientOptions(authFlowType: AuthFlowType.pkce),
+        authOptions: const FlutterAuthClientOptions(
+          authFlowType: AuthFlowType.pkce,
+        ),
       );
       _initialized = true;
       return true;
     } catch (e) {
       // If already initialized
-      if (e.toString().contains('already initialized') || e.toString().contains('hasInstance')) {
+      if (e.toString().contains('already initialized') ||
+          e.toString().contains('hasInstance')) {
         _initialized = true;
         return true;
       }
@@ -92,7 +103,7 @@ class SupabaseService {
   }
 
   // --- Auth Operations ---
-  
+
   bool get isLoggedIn {
     if (!_initialized) return false;
     return client.auth.currentUser != null;
@@ -124,7 +135,11 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<void> upsertItem(String id, String encryptedData, String updatedAt) async {
+  Future<void> upsertItem(
+    String id,
+    String encryptedData,
+    String updatedAt,
+  ) async {
     final userId = client.auth.currentUser?.id;
     if (userId == null) throw StateError('User is not logged in');
 
@@ -148,11 +163,13 @@ class SupabaseService {
     // Storage path: user_id/file_name
     final fullPath = '$userId/$remotePath';
 
-    await client.storage.from('vault_files').uploadBinary(
-      fullPath,
-      Uint8List.fromList(bytes),
-      fileOptions: const FileOptions(upsert: true),
-    );
+    await client.storage
+        .from('vault_files')
+        .uploadBinary(
+          fullPath,
+          Uint8List.fromList(bytes),
+          fileOptions: const FileOptions(upsert: true),
+        );
   }
 
   Future<Uint8List> downloadFile(String remotePath) async {
@@ -203,7 +220,10 @@ class SupabaseService {
     await client.from('team_members').insert(memberData);
   }
 
-  Future<void> updateTeamMember(String memberId, Map<String, dynamic> updates) async {
+  Future<void> updateTeamMember(
+    String memberId,
+    Map<String, dynamic> updates,
+  ) async {
     await client.from('team_members').update(updates).eq('id', memberId);
   }
 

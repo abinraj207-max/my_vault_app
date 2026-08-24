@@ -6,6 +6,7 @@ import 'item_list_screen.dart';
 import 'item_detail_screen.dart';
 import 'edit_item_screen.dart';
 import 'settings_screen.dart';
+import 'desktop_home_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VaultState vaultState;
@@ -246,6 +247,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 850) {
+          return HomeScreenDesktop(vaultState: widget.vaultState);
+        } else {
+          return _buildMobileLayout(context);
+        }
+      },
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
     final filteredItems = _getFilteredItems();
     final recentItems = List<VaultItem>.from(widget.vaultState.items)
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -480,57 +493,68 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
-        // Categories Grid
-        SliverGrid.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 2.1,
-          children: [
-            if (_canView(VaultType.password))
-              _buildCategoryCard(
-                VaultType.password,
-                Icons.vpn_key_rounded,
-                'Passwords',
-              ),
-            if (_canView(VaultType.apiKey))
-              _buildCategoryCard(
-                VaultType.apiKey,
-                Icons.code_rounded,
-                'API Keys',
-              ),
-            if (_canView(VaultType.email))
-              _buildCategoryCard(
-                VaultType.email,
-                Icons.alternate_email_rounded,
-                'Emails',
-              ),
-            if (_canView(VaultType.note))
-              _buildCategoryCard(
-                VaultType.note,
-                Icons.sticky_note_2_rounded,
-                'Secure Notes',
-              ),
-            if (_canView(VaultType.image))
-              _buildCategoryCard(VaultType.image, Icons.image_rounded, 'Images'),
-            if (_canView(VaultType.card))
-              _buildCategoryCard(
-                VaultType.card,
-                Icons.credit_card_rounded,
-                'Cards',
-              ),
-            if (_canView(VaultType.document))
-              _buildCategoryCard(
-                VaultType.document,
-                Icons.description_rounded,
-                'Documents',
-              ),
-            _buildCategoryCard(
-              null,
-              Icons.grid_view_rounded,
-              'All Items',
+        // Categories Bento Grid
+        SliverList(
+          delegate: SliverChildListDelegate([
+            // Row 1: All Items (Full Width)
+            _buildCategoryCard(null, Icons.grid_view_rounded, 'All Items', isFullWidth: true),
+            const SizedBox(height: 10),
+            
+            // Row 2: Passwords & API Keys
+            Row(
+              children: [
+                if (_canView(VaultType.password))
+                  Expanded(
+                    child: _buildCategoryCard(VaultType.password, Icons.vpn_key_rounded, 'Passwords'),
+                  ),
+                if (_canView(VaultType.password) && _canView(VaultType.apiKey))
+                  const SizedBox(width: 10),
+                if (_canView(VaultType.apiKey))
+                  Expanded(
+                    child: _buildCategoryCard(VaultType.apiKey, Icons.code_rounded, 'API Keys'),
+                  ),
+              ],
             ),
-          ],
+            const SizedBox(height: 10),
+
+            // Row 3: Emails & Secure Notes
+            Row(
+              children: [
+                if (_canView(VaultType.email))
+                  Expanded(
+                    child: _buildCategoryCard(VaultType.email, Icons.alternate_email_rounded, 'Emails'),
+                  ),
+                if (_canView(VaultType.email) && _canView(VaultType.note))
+                  const SizedBox(width: 10),
+                if (_canView(VaultType.note))
+                  Expanded(
+                    child: _buildCategoryCard(VaultType.note, Icons.sticky_note_2_rounded, 'Notes'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Row 4: Images & Cards
+            Row(
+              children: [
+                if (_canView(VaultType.image))
+                  Expanded(
+                    child: _buildCategoryCard(VaultType.image, Icons.image_rounded, 'Images'),
+                  ),
+                if (_canView(VaultType.image) && _canView(VaultType.card))
+                  const SizedBox(width: 10),
+                if (_canView(VaultType.card))
+                  Expanded(
+                    child: _buildCategoryCard(VaultType.card, Icons.credit_card_rounded, 'Cards'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Row 5: Documents (Full Width)
+            if (_canView(VaultType.document))
+              _buildCategoryCard(VaultType.document, Icons.description_rounded, 'Documents', isFullWidth: true),
+          ]),
         ),
 
         // Recent items Title
@@ -612,16 +636,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryCard(VaultType? type, IconData icon, String title) {
+  Widget _buildCategoryCard(VaultType? type, IconData icon, String title, {bool isFullWidth = false}) {
     final count = type != null
         ? _getItemCount(type)
         : widget.vaultState.items.length;
 
     return Card(
       elevation: 0,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: AppColors.border, width: 1),
+        side: const BorderSide(color: AppColors.border, width: 1),
       ),
       color: AppColors.surface,
       child: InkWell(
@@ -639,16 +664,21 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.surfaceVariant,
-                foregroundColor: AppColors.highlight,
-                child: Icon(icon, size: 18),
+              // Glowing Neon Green Icon Circle
+              Container(
+                height: 38,
+                width: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black,
+                  border: Border.all(color: AppColors.highlight.withOpacity(0.4), width: 1.5),
+                ),
+                child: Icon(icon, size: 18, color: AppColors.highlight),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -658,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       title,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 13,
                         color: Colors.white,
                       ),
                       maxLines: 1,
@@ -667,7 +697,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '$count ${count == 1 ? 'item' : 'items'}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 10,
                       ),
@@ -675,16 +705,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+              // Count Badge Chip
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.highlight.withOpacity(count > 0 ? 1 : 0.15),
+                  color: count > 0 ? AppColors.highlight.withOpacity(0.1) : AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: count > 0 ? AppColors.highlight.withOpacity(0.3) : AppColors.border),
                 ),
                 child: Text(
                   '$count',
                   style: TextStyle(
-                    color: count > 0 ? Colors.black : AppColors.textSecondary,
+                    color: count > 0 ? AppColors.highlight : AppColors.textSecondary,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),

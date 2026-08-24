@@ -190,64 +190,76 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         break;
     }
 
-    return Column(
-      children: [
-        Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                height: 120,
-                width: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.border.withOpacity(0.3), width: 1.5),
-                ),
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border, width: 1),
+      ),
+      color: AppColors.surface,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+        child: Column(
+          children: [
+            Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    height: 104,
+                    width: 104,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border.withOpacity(0.5), width: 1.5),
+                    ),
+                  ),
+                  Container(
+                    height: 84,
+                    width: 84,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black,
+                      border: Border.all(color: AppColors.highlight, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.highlight.withOpacity(0.2),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        )
+                      ],
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 32,
+                      color: AppColors.highlight,
+                    ),
+                  ),
+                ],
               ),
-              Container(
-                height: 104,
-                width: 104,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.border, width: 2),
-                ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _currentItem.title,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.highlight.withOpacity(0.4), width: 1),
               ),
-              Container(
-                height: 84,
-                width: 84,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.highlight,
-                ),
-                child: Icon(
-                  icon,
-                  size: 38,
-                  color: Colors.black,
-                ),
+              child: Text(
+                _currentItem.type.name.toUpperCase(),
+                style: const TextStyle(fontSize: 10, color: AppColors.highlight, fontWeight: FontWeight.bold, letterSpacing: 0.8),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        Text(
-          _currentItem.title,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Text(
-            _currentItem.type.name.toUpperCase(),
-            style: const TextStyle(fontSize: 10, color: AppColors.highlight, fontWeight: FontWeight.bold, letterSpacing: 0.8),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -610,31 +622,38 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildMetadataCard() {
     final dateFormat = DateFormat('MMM dd, yyyy - hh:mm a');
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Created:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-              Text(dateFormat.format(_currentItem.createdAt), style: const TextStyle(fontSize: 11, color: Colors.white)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Last Updated:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-              Text(dateFormat.format(_currentItem.updatedAt), style: const TextStyle(fontSize: 11, color: Colors.white)),
-            ],
-          ),
-        ],
+    return Card(
+      elevation: 0,
+      color: AppColors.surface,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Created:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                Text(dateFormat.format(_currentItem.createdAt), style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Last Updated:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                Text(dateFormat.format(_currentItem.updatedAt), style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  Widget _buildActionRow() {
+  }  Widget _buildActionRow() {
     return Row(
       children: [
         Expanded(

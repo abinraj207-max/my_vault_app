@@ -13,13 +13,7 @@ import '../models/role_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
-enum VaultStatus {
-  unauthenticated,
-  uninitialized,
-  locked,
-  unlocked,
-  corrupted,
-}
+enum VaultStatus { unauthenticated, uninitialized, locked, unlocked, corrupted }
 
 class VaultState extends ChangeNotifier {
   final StorageService _storageService;
@@ -32,7 +26,7 @@ class VaultState extends ChangeNotifier {
 
   String? _masterPassword;
   SecretKey? _secretKey;
-  
+
   SecretKey? get secretKey => _secretKey;
   String? get masterPassword => _masterPassword;
 
@@ -59,7 +53,8 @@ class VaultState extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
 
-  int _autoLockTimeout = 60; // In seconds (default: 1 min). 0 = Immediate, -1 = Never
+  int _autoLockTimeout =
+      60; // In seconds (default: 1 min). 0 = Immediate, -1 = Never
   int get autoLockTimeout => _autoLockTimeout;
 
   bool _biometricEnabled = false;
@@ -74,20 +69,25 @@ class VaultState extends ChangeNotifier {
   /// (e.g., during team member account creation).
   bool suppressAuthChanges = false;
 
-  VaultState(this._storageService, this._encryptionService, this._biometricService, this.supabaseService) {
+  VaultState(
+    this._storageService,
+    this._encryptionService,
+    this._biometricService,
+    this.supabaseService,
+  ) {
     _init();
   }
 
   /// Initialize state: load settings, check if vault exists, etc.
   Future<void> _init() async {
     await loadSettings();
-    
+
     if (supabaseService.isInitialized) {
       _listenToAuthChanges();
     }
-    
+
     await checkVaultStatus();
-    
+
     // Load last sync time
     final prefs = await SharedPreferences.getInstance();
     _lastSyncTime = prefs.getString('last_sync_time');
@@ -103,7 +103,10 @@ class VaultState extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> _handleAuthStateChange(AuthChangeEvent event, Session? session) async {
+  Future<void> _handleAuthStateChange(
+    AuthChangeEvent event,
+    Session? session,
+  ) async {
     // Skip processing if suppressed (e.g., during team member creation)
     if (suppressAuthChanges) return;
 
@@ -132,7 +135,7 @@ class VaultState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    
+
     if (_secretKey == null) {
       _status = VaultStatus.locked;
     } else {
@@ -144,7 +147,7 @@ class VaultState extends ChangeNotifier {
   /// Load theme, lock timeout, and biometric preferences from SharedPreferences.
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 1. Theme
     final themeName = prefs.getString('theme_mode') ?? 'system';
     _themeMode = ThemeMode.values.firstWhere(
@@ -183,7 +186,7 @@ class VaultState extends ChangeNotifier {
       try {
         // Verify password first
         await _storageService.readVaultIndex(passwordVerify);
-        
+
         // Save Master Password securely in hardware Keystore
         await _biometricService.saveMasterPassword(passwordVerify);
         await _biometricService.setBiometricUnlockEnabled(true);
@@ -222,7 +225,8 @@ class VaultState extends ChangeNotifier {
       // Verify the password using the verification token (if it exists)
       if (cloudVerificationJson != null && cloudVerificationJson.isNotEmpty) {
         try {
-          final decodedVer = jsonDecode(cloudVerificationJson) as Map<String, dynamic>;
+          final decodedVer =
+              jsonDecode(cloudVerificationJson) as Map<String, dynamic>;
           final decrypted = await _encryptionService.decryptText(
             decodedVer['ciphertext'] as String,
             decodedVer['nonce'] as String,
@@ -243,7 +247,8 @@ class VaultState extends ChangeNotifier {
           for (final record in remoteRecords) {
             try {
               final remoteEncryptedData = record['encrypted_data'] as String;
-              final decodedEnc = jsonDecode(remoteEncryptedData) as Map<String, dynamic>;
+              final decodedEnc =
+                  jsonDecode(remoteEncryptedData) as Map<String, dynamic>;
               await _encryptionService.decryptText(
                 decodedEnc['ciphertext'] as String,
                 decodedEnc['nonce'] as String,
@@ -258,14 +263,17 @@ class VaultState extends ChangeNotifier {
             throw const FormatException('Invalid master password.');
           }
         }
-        
+
         // Auto-generate the verification token so it is saved for next time
         try {
-          final verificationMap = await _encryptionService.encryptText('vault_verified', derivedKey);
+          final verificationMap = await _encryptionService.encryptText(
+            'vault_verified',
+            derivedKey,
+          );
           await supabaseService.client.auth.updateUser(
-            UserAttributes(data: {
-              'vault_verification': jsonEncode(verificationMap),
-            }),
+            UserAttributes(
+              data: {'vault_verification': jsonEncode(verificationMap)},
+            ),
           );
         } catch (_) {}
       }
@@ -274,30 +282,33 @@ class VaultState extends ChangeNotifier {
       final teamMembership = await supabaseService.getMyTeamMembership();
       List<Map<String, dynamic>> remoteRecords = [];
       SecretKey keyToUse = derivedKey;
-      
+
       if (teamMembership != null) {
         // User is a team member!
         final roleData = teamMembership['roles'] as Map<String, dynamic>?;
         if (roleData != null) {
           _currentRole = Role.fromJson(roleData);
         }
-        
+
         final ownerId = teamMembership['owner_id'] as String;
         print('Is team member! ownerId: $ownerId');
-        
-        final encryptedOwnerKeyStr = teamMembership['encrypted_owner_key'] as String?;
-        
+
+        final encryptedOwnerKeyStr =
+            teamMembership['encrypted_owner_key'] as String?;
+
         if (encryptedOwnerKeyStr != null) {
           try {
             // Decrypt the owner's key using the member's derived key
-            final encryptedMap = jsonDecode(encryptedOwnerKeyStr) as Map<String, dynamic>;
-            final decryptedOwnerKeyBase64 = await _encryptionService.decryptText(
-              encryptedMap['ciphertext'] as String,
-              encryptedMap['nonce'] as String,
-              encryptedMap['mac'] as String,
-              derivedKey,
-            );
-            
+            final encryptedMap =
+                jsonDecode(encryptedOwnerKeyStr) as Map<String, dynamic>;
+            final decryptedOwnerKeyBase64 = await _encryptionService
+                .decryptText(
+                  encryptedMap['ciphertext'] as String,
+                  encryptedMap['nonce'] as String,
+                  encryptedMap['mac'] as String,
+                  derivedKey,
+                );
+
             final ownerKeyBytes = base64.decode(decryptedOwnerKeyBase64);
             keyToUse = SecretKey(ownerKeyBytes);
           } catch (_) {
@@ -306,7 +317,7 @@ class VaultState extends ChangeNotifier {
         } else {
           print('WARNING: encryptedOwnerKeyStr is NULL!');
         }
-        
+
         remoteRecords = await supabaseService.fetchOwnerItems(ownerId);
         print('Fetched ${remoteRecords.length} items for owner $ownerId');
       } else {
@@ -315,19 +326,24 @@ class VaultState extends ChangeNotifier {
         remoteRecords = await supabaseService.fetchItems();
         print('Fetched ${remoteRecords.length} items');
       }
-      
+
       List<VaultItem> remoteItems = [];
       for (final record in remoteRecords) {
         try {
           final remoteEncryptedData = record['encrypted_data'] as String;
-          final decodedEnc = jsonDecode(remoteEncryptedData) as Map<String, dynamic>;
+          final decodedEnc =
+              jsonDecode(remoteEncryptedData) as Map<String, dynamic>;
           final decryptedJson = await _encryptionService.decryptText(
             decodedEnc['ciphertext'] as String,
             decodedEnc['nonce'] as String,
             decodedEnc['mac'] as String,
             keyToUse,
           );
-          remoteItems.add(VaultItem.fromJson(jsonDecode(decryptedJson) as Map<String, dynamic>));
+          remoteItems.add(
+            VaultItem.fromJson(
+              jsonDecode(decryptedJson) as Map<String, dynamic>,
+            ),
+          );
         } catch (e, stackTrace) {
           print('Failed to decrypt item ${record['id']}: $e');
           print('Stack trace: $stackTrace');
@@ -336,7 +352,9 @@ class VaultState extends ChangeNotifier {
         }
       }
 
-      print('Successfully decrypted ${remoteItems.length} items from ${remoteRecords.length} remote records.');
+      print(
+        'Successfully decrypted ${remoteItems.length} items from ${remoteRecords.length} remote records.',
+      );
 
       // Filter items based on role permissions
       if (_currentRole != null) {
@@ -401,23 +419,28 @@ class VaultState extends ChangeNotifier {
   /// Creates a new vault database online.
   Future<void> createNewVault(String password) async {
     _masterPassword = password;
-    
+
     // Generate new salt and derive key
     final salt = _encryptionService.generateRandomSalt(16);
     _secretKey = await _encryptionService.deriveKey(password, salt);
-    
+
     // Encrypt verification token
-    final verificationMap = await _encryptionService.encryptText('vault_verified', _secretKey!);
+    final verificationMap = await _encryptionService.encryptText(
+      'vault_verified',
+      _secretKey!,
+    );
     final verificationJson = jsonEncode(verificationMap);
 
     // Save salt and verification to Supabase metadata if logged in
     if (supabaseService.isLoggedIn) {
       try {
         await supabaseService.client.auth.updateUser(
-          UserAttributes(data: {
-            'vault_salt': base64.encode(salt),
-            'vault_verification': verificationJson,
-          }),
+          UserAttributes(
+            data: {
+              'vault_salt': base64.encode(salt),
+              'vault_verification': verificationJson,
+            },
+          ),
         );
       } catch (_) {}
     }
@@ -429,7 +452,9 @@ class VaultState extends ChangeNotifier {
 
   /// Changes the vault master password online. Re-encrypts user items.
   Future<void> changeMasterPassword(String newPassword) async {
-    if (_status != VaultStatus.unlocked || _masterPassword == null || _secretKey == null) {
+    if (_status != VaultStatus.unlocked ||
+        _masterPassword == null ||
+        _secretKey == null) {
       throw const OSError('Vault must be unlocked to change password');
     }
 
@@ -443,21 +468,25 @@ class VaultState extends ChangeNotifier {
     final newKey = await _encryptionService.deriveKey(newPassword, salt);
 
     // Generate new verification token
-    final verificationMap = await _encryptionService.encryptText('vault_verified', newKey);
+    final verificationMap = await _encryptionService.encryptText(
+      'vault_verified',
+      newKey,
+    );
     final verificationJson = jsonEncode(verificationMap);
 
     // Save verification to Supabase metadata
     if (supabaseService.isLoggedIn) {
       await supabaseService.client.auth.updateUser(
-        UserAttributes(data: {
-          'vault_verification': verificationJson,
-        }),
+        UserAttributes(data: {'vault_verification': verificationJson}),
       );
 
       // Re-encrypt existing items with the new key and upload
       for (final item in _items) {
         final itemJson = jsonEncode(item.toJson());
-        final encryptedMap = await _encryptionService.encryptText(itemJson, newKey);
+        final encryptedMap = await _encryptionService.encryptText(
+          itemJson,
+          newKey,
+        );
         final encryptedData = jsonEncode(encryptedMap);
         await supabaseService.upsertItem(
           item.id,
@@ -493,12 +522,15 @@ class VaultState extends ChangeNotifier {
   void handleLifecycleStateChanged(AppLifecycleState state) {
     if (_status != VaultStatus.unlocked) return;
 
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       // Record time when app goes to background
       _backgroundTime = DateTime.now();
     } else if (state == AppLifecycleState.resumed) {
       if (_backgroundTime != null && _autoLockTimeout != -1) {
-        final elapsedSeconds = DateTime.now().difference(_backgroundTime!).inSeconds;
+        final elapsedSeconds = DateTime.now()
+            .difference(_backgroundTime!)
+            .inSeconds;
         if (_autoLockTimeout == 0 || elapsedSeconds >= _autoLockTimeout) {
           // Time expired, auto-lock!
           lockVault();
@@ -577,15 +609,27 @@ class VaultState extends ChangeNotifier {
   }
 
   /// Encrypt and save a selected file directly to Supabase storage in memory.
-  Future<String> addFileToVault(File file, VaultType type, String originalName) async {
+  Future<String> addFileToVault(
+    File file,
+    VaultType type,
+    String originalName,
+  ) async {
     if (_secretKey == null) {
       throw const OSError('Vault is locked. Cannot add files.');
     }
 
-    final uuid = UniqueKey().toString().replaceAll('#', '').replaceAll('[', '').replaceAll(']', '').trim();
-    final fileExt = originalName.contains('.') ? originalName.split('.').last : '';
-    final targetName = 'file_${uuid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt.enc';
-    
+    final uuid = UniqueKey()
+        .toString()
+        .replaceAll('#', '')
+        .replaceAll('[', '')
+        .replaceAll(']', '')
+        .trim();
+    final fileExt = originalName.contains('.')
+        ? originalName.split('.').last
+        : '';
+    final targetName =
+        'file_${uuid}_${DateTime.now().millisecondsSinceEpoch}.$fileExt.enc';
+
     final bytes = await file.readAsBytes();
     final box = await _encryptionService.encryptBytes(bytes, _secretKey!);
 
@@ -617,18 +661,24 @@ class VaultState extends ChangeNotifier {
     final ciphertext = encryptedBytes.sublist(28);
 
     final box = SecretBox(ciphertext, nonce: nonce, mac: Mac(mac));
-    final decryptedBytes = await _encryptionService.decryptBytes(box, _secretKey!);
+    final decryptedBytes = await _encryptionService.decryptBytes(
+      box,
+      _secretKey!,
+    );
     return Uint8List.fromList(decryptedBytes);
   }
 
   /// Temporarily decrypt a document to native cache for viewing.
-  Future<File> decryptFileToCache(String relativePath, String originalName) async {
+  Future<File> decryptFileToCache(
+    String relativePath,
+    String originalName,
+  ) async {
     if (_secretKey == null) {
       throw const OSError('Vault is locked.');
     }
     final cacheDir = await getTemporaryDirectory();
     final tempFile = File('${cacheDir.path}/$originalName');
-    
+
     final decryptedBytes = await decryptFile(relativePath);
     await tempFile.writeAsBytes(decryptedBytes, flush: true);
     return tempFile;
@@ -662,7 +712,7 @@ class VaultState extends ChangeNotifier {
     _secretKey = null;
     _items.clear();
     _status = VaultStatus.uninitialized;
-    
+
     // Clear biometric settings
     await _biometricService.setBiometricUnlockEnabled(false);
     _biometricEnabled = false;
@@ -672,26 +722,31 @@ class VaultState extends ChangeNotifier {
 
   /// Sync local vault items and files.
   Future<void> syncWithCloud() async {
-    if (_masterPassword == null || _secretKey == null || !supabaseService.isLoggedIn) return;
-    
+    if (_masterPassword == null ||
+        _secretKey == null ||
+        !supabaseService.isLoggedIn)
+      return;
+
     try {
       _isSyncing = true;
       notifyListeners();
-      
+
       // Re-fetch membership & items
       final teamMembership = await supabaseService.getMyTeamMembership();
       List<Map<String, dynamic>> remoteRecords = [];
       SecretKey keyToUse = _secretKey!;
-      
+
       if (teamMembership != null) {
         final roleData = teamMembership['roles'] as Map<String, dynamic>?;
         if (roleData != null) {
           _currentRole = Role.fromJson(roleData);
         }
         final ownerId = teamMembership['owner_id'] as String;
-        final encryptedOwnerKeyStr = teamMembership['encrypted_owner_key'] as String?;
+        final encryptedOwnerKeyStr =
+            teamMembership['encrypted_owner_key'] as String?;
         if (encryptedOwnerKeyStr != null) {
-          final encryptedMap = jsonDecode(encryptedOwnerKeyStr) as Map<String, dynamic>;
+          final encryptedMap =
+              jsonDecode(encryptedOwnerKeyStr) as Map<String, dynamic>;
           final decryptedOwnerKeyBase64 = await _encryptionService.decryptText(
             encryptedMap['ciphertext'] as String,
             encryptedMap['nonce'] as String,
@@ -706,40 +761,53 @@ class VaultState extends ChangeNotifier {
         _currentRole = null;
         remoteRecords = await supabaseService.fetchItems();
       }
-      
+
       List<VaultItem> remoteItems = [];
       for (final record in remoteRecords) {
         try {
           final remoteEncryptedData = record['encrypted_data'] as String;
-          final decodedEnc = jsonDecode(remoteEncryptedData) as Map<String, dynamic>;
+          final decodedEnc =
+              jsonDecode(remoteEncryptedData) as Map<String, dynamic>;
           final decryptedJson = await _encryptionService.decryptText(
             decodedEnc['ciphertext'] as String,
             decodedEnc['nonce'] as String,
             decodedEnc['mac'] as String,
             keyToUse,
           );
-          remoteItems.add(VaultItem.fromJson(jsonDecode(decryptedJson) as Map<String, dynamic>));
+          remoteItems.add(
+            VaultItem.fromJson(
+              jsonDecode(decryptedJson) as Map<String, dynamic>,
+            ),
+          );
         } catch (_) {
           // Skip corrupted items
         }
       }
-      
+
       // Filter items based on role permissions
       if (_currentRole != null) {
         remoteItems = remoteItems.where((item) {
           switch (item.type) {
-            case VaultType.password: return _currentRole!.canViewPasswords;
-            case VaultType.apiKey: return _currentRole!.canViewApiKeys;
-            case VaultType.email: return _currentRole!.canViewEmails;
-            case VaultType.note: return _currentRole!.canViewNotes;
-            case VaultType.image: return _currentRole!.canViewImages;
-            case VaultType.card: return _currentRole!.canViewCards;
-            case VaultType.document: return _currentRole!.canViewDocuments;
-            default: return false;
+            case VaultType.password:
+              return _currentRole!.canViewPasswords;
+            case VaultType.apiKey:
+              return _currentRole!.canViewApiKeys;
+            case VaultType.email:
+              return _currentRole!.canViewEmails;
+            case VaultType.note:
+              return _currentRole!.canViewNotes;
+            case VaultType.image:
+              return _currentRole!.canViewImages;
+            case VaultType.card:
+              return _currentRole!.canViewCards;
+            case VaultType.document:
+              return _currentRole!.canViewDocuments;
+            default:
+              return false;
           }
         }).toList();
       }
-      
+
       _items = remoteItems;
       _lastSyncTime = DateTime.now().toIso8601String();
       final prefs = await SharedPreferences.getInstance();
@@ -753,7 +821,10 @@ class VaultState extends ChangeNotifier {
   /// Helper to encrypt and upload a local item to Supabase
   Future<void> _uploadItemToSupabase(VaultItem item) async {
     final itemJson = jsonEncode(item.toJson());
-    final encryptedMap = await _encryptionService.encryptText(itemJson, _secretKey!);
+    final encryptedMap = await _encryptionService.encryptText(
+      itemJson,
+      _secretKey!,
+    );
     final encryptedData = jsonEncode(encryptedMap);
     await supabaseService.upsertItem(
       item.id,

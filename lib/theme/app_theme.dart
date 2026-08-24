@@ -244,25 +244,25 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Main background (Deep Obsidian Navy)
-  static const Color background = Color(0xFF070A13);
+  // Main background (Deep Obsidian Black)
+  static const Color background = Color(0xFF08090C);
 
-  // Highlight accent (Vibrant Cyber Cyan)
-  static const Color highlight = Color.fromARGB(255, 107, 209, 12);
+  // Highlight accent (Vibrant Cyber Lime Green)
+  static const Color highlight = Color(0xFF55E610);
 
-  // Surface / Container color (Slate Navy)
-  static const Color surface = Color(0xFF0F1626);
+  // Surface / Container color (Obsidian Card Surface)
+  static const Color surface = Color(0xFF0F111A);
 
-  // Secondary surface color (Lighter Slate Navy)
-  static const Color surfaceVariant = Color(0xFF17223B);
+  // Secondary surface color (Lighter container / Highlight / Text fields)
+  static const Color surfaceVariant = Color(0xFF161926);
 
-  // Subtle border color (Steel Blue)
-  static const Color border = Color(0xFF1E2D4A);
+  // Subtle border color (Slate Dark Steel)
+  static const Color border = Color(0xFF1A1D2B);
 
   // Text Colors
   static const Color textPrimary = Colors.white;
-  static const Color textSecondary = Color(0xFF8A99AD);
-  static const Color textDisabled = Color(0xFF53637A);
+  static const Color textSecondary = Color(0xFF7C89A3);
+  static const Color textDisabled = Color(0xFF4B5469);
 }
 
 class AppTheme {
